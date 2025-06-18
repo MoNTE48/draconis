@@ -882,7 +882,12 @@ local function draconic_step(itemstack, player, pointed_thing)
 		for i = 1, 3 do
 			local def_time = v.times[i]
 			local groupcap = current_caps.groupcaps and current_caps.groupcaps[k]
-			local current_time = round(groupcap.times[i] or 1, 0.1)
+			local current_time = 1
+
+			if groupcap and groupcap.times and groupcap.times[i] then
+				current_time = round(groupcap.times[i], 0.1)
+			end
+
 			local time_diff = math.abs((def_time + speed_offset) - current_time)
 			if time_diff > 0.1 then
 				update = true

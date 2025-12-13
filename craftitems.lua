@@ -803,7 +803,7 @@ for color in pairs(draconis.colors_ice) do
 			max_drop_level = 1,
 			groupcaps = {
 				snappy = {
-					times = {[1] = 0.4, [2] = 0.2, [3] = 0.1},
+					times = {[1] = 0.8, [2] = 0.6, [3] = 0.4},
 					uses = 40,
 					maxlevel = 3
 				}
@@ -929,13 +929,14 @@ minetest.register_tool("draconis:pick_" .. element .. "_draconic_steel", {
 		max_drop_level = 3,
 		groupcaps = {
 			cracky = {
-				times={[1]=0.3, [2]=0.15, [3]=0.075},
-				uses=0,
-				maxlevel=3},
+				times = {[1] = 0.6, [2] = 0.4, [3] = 0.3},
+				uses = 200,
+				maxlevel = 3
+			},
 			crumbly = {
-				times={[1]=0.5, [2]=0.25, [3]=0.2},
-				uses=0,
-				maxlevel=3
+				times = {[1] = 0.8, [2] = 0.5, [3] = 0.4},
+				uses = 200,
+				maxlevel = 3
 			},
 		},
 		damage_groups = {fleshy = 35}
@@ -955,8 +956,8 @@ minetest.register_tool("draconis:shovel_" .. element .. "_draconic_steel", {
 		max_drop_level = 1,
 		groupcaps = {
 			crumbly = {
-				times = {[1] = 0.4, [2] = 0.2, [3] = 0.1},
-				uses = 0,
+				times = {[1] = 0.6, [2] = 0.4, [3] = 0.2},
+				uses = 200,
 				maxlevel = 3
 			}
 		},
@@ -977,8 +978,8 @@ minetest.register_tool("draconis:axe_" .. element .. "_draconic_steel", {
 		max_drop_level = 1,
 		groupcaps = {
 			choppy = {
-				times={[1]=0.3, [2]=0.15, [3]=0.075},
-				uses = 0,
+				times={[1] = 0.6, [2] = 0.3, [3] = 0.15},
+				uses = 200,
 				maxlevel = 3
 			}
 		},
@@ -999,8 +1000,8 @@ minetest.register_tool("draconis:sword_" .. element .. "_draconic_steel", {
 		max_drop_level = 1,
 		groupcaps = {
 			snappy = {
-				times = {[1] = 0.05, [2] = 0.025, [3] = 0.01},
-				uses = 0,
+				times = {[1] = 0.2, [2] = 0.15, [3] = 0.1},
+				uses = 200,
 				maxlevel = 3
 			}
 		},

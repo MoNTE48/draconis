@@ -586,8 +586,8 @@ minetest.register_entity("draconis:dragon_fire", {
 				and #ent.drops > 0 then
 					local n_drops = table.copy(ent.drops)
 					for n = 1, #n_drops do
-						local name = n_drops[n].name
-						if minetest.get_item_group(name, "food_meat") > 0 then
+						local name = n_drops[n] and n_drops[n].name
+						if name and minetest.get_item_group(name, "food_meat") > 0 then
 							local output = minetest.get_craft_result({
 								method = "cooking",
 								width = 1,

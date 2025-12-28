@@ -1449,8 +1449,13 @@ minetest.register_on_craft(function(itemstack, player, old_craft_grid)
 			itemstack = ItemStack()
 			local pos = player:get_pos()
 			pos.y = pos.y + 1.6
-			for n = 1, #itemlist do
-				minetest.add_item(pos, itemlist[n])
+			for _, stack_to_drop in ipairs(itemlist) do
+			local stack_name = stack_to_drop and stack_to_drop:get_name() or ""
+			if stack_name == "draconis:dragon_bone" then
+				minetest.add_item(pos, "draconis:dragon_bone") -- only drop one. the rest of the stack will remain the grid.
+			else
+				minetest.add_item(pos, stack_to_drop)
+			end
 			end
 			return itemstack
 		else

@@ -590,6 +590,7 @@ minetest.register_craftitem("draconis:dragonbinder", {
 	description = S("Dragonbinder"),
 	inventory_image = "draconis_dragonbinder.png",
 	stack_max = 1,
+	groups = {block_give_command = 1},
 	on_place = dragonbinder_place,
 	on_secondary_use = dragonbinder_use
 })

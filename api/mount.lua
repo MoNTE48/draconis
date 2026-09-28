@@ -68,6 +68,7 @@ function draconis.set_fake_player(self, player, passenger)
 		"draconis:mounted_player_visual",
 		minetest.serialize({player = player_name})
 	)
+	if not fake_player then return end
 	-- Cache Player Data
 	draconis.mounted_player_data[player_name] = {
 		collision = table.copy(player:get_properties().collisionbox),
@@ -161,7 +162,9 @@ end
 function draconis.attach_player(self, player)
 	if not player
 	or not player:get_look_horizontal()
-	or not player:is_player() then
+	or not player:is_player()
+	or player:get_attach() -- Already riding something
+	or not self.object:get_pos() then
 		return
 	end
 	local scale = self.growth_scale or 1
@@ -216,7 +219,9 @@ end
 function draconis.attach_passenger(self, player)
 	if not player
 	or not player:get_look_horizontal()
-	or not player:is_player() then
+	or not player:is_player()
+	or player:get_attach() -- Already riding something
+	or not self.object:get_pos() then
 		return
 	end
 	local scale = self.growth_scale
@@ -276,11 +281,8 @@ function draconis.detach_player(self, player)
 	-- Attach Player
 	player:set_detach()
 	-- Set HUD
-	if self.attack_stamina then
-		player:hud_remove(data.huds["health"])
-		player:hud_remove(data.huds["hunger"])
-		player:hud_remove(data.huds["stamina"])
-		player:hud_remove(data.huds["breath"])
+	for _, hud_id in pairs(data.huds or {}) do
+		player:hud_remove(hud_id)
 	end
 	player:hud_set_flags({wielditem = true})
 	-- Set Fake Player (Using a fake player and changing 1st person eye offset works around the above issue)
@@ -288,8 +290,18 @@ function draconis.detach_player(self, player)
 	-- Set Dragon Data
 	if player == self.rider then
 		self.rider = nil
-	else
+	elseif player == self.passenger then
 		self.passenger = nil
+	end
+end
+
+-- Detaches both riders, e.g. when the mount is removed or unloaded
+function draconis.detach_riders(self)
+	if self.passenger then
+		draconis.detach_player(self, self.passenger)
+	end
+	if self.rider then
+		draconis.detach_player(self, self.rider)
 	end
 end
 
@@ -315,7 +327,8 @@ function draconis.send_passenger_request(self, clicker)
 	minetest.show_formspec(rider:get_player_name(), "draconis:passenger_request", passenger_form(clicker))
 	requesting_passenger[rider:get_player_name()] = {
 		player = clicker,
-		entity = self
+		entity = self,
+		time = os.time()
 	}
 end
 
@@ -327,10 +340,20 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		end
 		local pssngr = requesting_passenger[name].player
 		local ent = requesting_passenger[name].entity
+		local time = requesting_passenger[name].time
 		if fields.btn_accept_pssngr
 		and pssngr
 		and pssngr:get_look_horizontal() then
-			draconis.attach_passenger(ent, pssngr)
+			-- The request may be stale: the Dragon must still be ridden by this player,
+			-- and the passenger must be close
+			local ent_pos = ent.object:get_pos()
+			if ent_pos
+			and ent.rider == player
+			and not ent.passenger
+			and os.time() - time <= 30
+			and vector.distance(ent_pos, pssngr:get_pos()) <= 32 then
+				draconis.attach_passenger(ent, pssngr)
+			end
 			requesting_passenger[name] = nil
 			return false
 		end
@@ -387,19 +410,33 @@ minetest.register_on_joinplayer(function(player)
 	end
 end)
 
-minetest.register_on_dieplayer(function(player)
+-- The passenger can't stay without the rider
+local function dismount(player)
 	local name = player:get_player_name()
 	local data = draconis.mounted_player_data[name]
 	if data and data.dragon then
-		draconis.detach_player(data.dragon, player)
+		if player == data.dragon.rider then
+			draconis.detach_riders(data.dragon)
+		else
+			draconis.detach_player(data.dragon, player)
+		end
 	end
-end)
+end
+
+minetest.register_on_dieplayer(dismount)
 
 -------------------
 -- Data Handling --
 -------------------
 
 minetest.register_on_leaveplayer(function(player)
+	requesting_passenger[player:get_player_name()] = nil
+	for rider, request in pairs(requesting_passenger) do
+		if request.player == player then
+			requesting_passenger[rider] = nil
+		end
+	end
+	dismount(player)
 	draconis.unset_fake_player(player)
 end)
 

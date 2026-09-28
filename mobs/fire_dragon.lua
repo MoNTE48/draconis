@@ -232,6 +232,7 @@ creatura.register_mob("draconis:fire_dragon", {
 		self.alert_timer = self:memorize("alert_timer", 15)
 	end,
 	deactivate_func = function(self)
+		draconis.detach_riders(self)
 		if not draconis.dragons[self.dragon_id] then return end
 		local owner = draconis.dragons[self.dragon_id].owner
 		if not owner then return end

@@ -188,6 +188,7 @@ creatura.register_mob("draconis:jungle_wyvern", {
 		self.alert_timer = self:memorize("alert_timer", 15)
 	end,
 	deactivate_func = function(self)
+		draconis.detach_riders(self)
 		if draconis.wyverns[self.object] then
 			draconis.wyverns[self.object] = nil
 		end

@@ -736,6 +736,7 @@ local function damage_objects(self, pos, radius)
 end
 
 local function freeze_nodes(pos, radius)
+	if not terrain_destruction then return end
 	local h_stride = radius
 	local v_stride = math.ceil(radius * 0.5)
 	local pos1= {
@@ -780,6 +781,7 @@ local function freeze_nodes(pos, radius)
 end
 
 local function scorch_nodes(pos, radius)
+	if not terrain_destruction then return end
 	local h_stride = radius
 	local v_stride = math.ceil(radius * 0.5)
 	local pos1= {
@@ -818,7 +820,8 @@ local function scorch_nodes(pos, radius)
 					if minetest.registered_nodes[flame_node]
 					and creatura.get_node_def(name).walkable then
 						local above = {x = npos.x, y = npos.y + 1, z = npos.z}
-						if not creatura.get_node_def(above).walkable then
+						if minetest.get_node(above).name == "air"
+						and not minetest.is_protected(above, "") then
 							minetest.set_node(above, {name = flame_node})
 						end
 					end

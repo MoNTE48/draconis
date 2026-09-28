@@ -918,6 +918,7 @@ creatura.register_utility("draconis:wyvern_breaking", function(self, player)
 		if taming >= 100 then
 			minetest.chat_send_player(player:get_player_name(), S("The Jungle Wyvern has been tamed!"))
 			_self.owner = _self:memorize("owner", player:get_player_name())
+			_self.despawn_after = _self:memorize("despawn_after", false)
 			return true
 		end
 		if not _self:get_action() then

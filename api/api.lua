@@ -1642,6 +1642,7 @@ minetest.register_chatcommand("tamedragon", {
 			if not ent.owner then
 				ent.owner = name
 				ent:memorize("owner", ent.owner)
+				ent.despawn_after = ent:memorize("despawn_after", false)
 				minetest.chat_send_player(name, S("@1 has been tamed!", get_mob_name(ent.name)))
 			else
 				minetest.chat_send_player(name, S("@1 is already tamed.", get_mob_name(ent.name)))
@@ -1693,6 +1694,7 @@ minetest.register_chatcommand("set_dragon_owner", {
 			local particle = "creatura_particle_green.png"
 			ent.owner = param_name
 			ent:memorize("owner", ent.owner)
+			ent.despawn_after = ent:memorize("despawn_after", false)
 			minetest.chat_send_player(name, S("@1 is now owned by @2", get_mob_name(ent.name), param_name))
 			minetest.add_particlespawner({
 				amount = 16,

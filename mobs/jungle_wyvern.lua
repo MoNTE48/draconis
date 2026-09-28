@@ -202,9 +202,9 @@ creatura.register_spawn_item("draconis:jungle_wyvern", {
 local biomes = {}
 
 minetest.register_on_mods_loaded(function()
-	for name, def in ipairs(minetest.registered_biomes) do
-		if name:find("jungle")
-		or name:find("rainforest")
+	for name, def in pairs(minetest.registered_biomes) do
+		if type(name) == "string"
+		and (name:find("jungle") or name:find("rainforest"))
 		and (def.y_max or 1) > 0 then
 			table.insert(biomes, name)
 		end

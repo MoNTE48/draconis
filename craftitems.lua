@@ -36,18 +36,19 @@ local function correct_name(str)
 	end
 end
 
-local function infotext(str, format)
-	if format then
-		return minetest.colorize("#a9a9a9", correct_name(str))
-	end
+local function infotext(str)
 	return minetest.colorize("#a9a9a9", str)
+end
+
+local function get_mob_name(name)
+	return draconis.mob_names[name] or correct_name(name)
 end
 
 local function get_binder_desc(self)
 	local item_name = S("Dragonbinder")
 
-	local info = item_name .. "\n" .. correct_name(self.name)
-	if self.nametag ~= "" then
+	local info = item_name .. "\n" .. get_mob_name(self.name)
+	if self.nametag and self.nametag ~= "" then
 		info = info.."\n" .. infotext(self.nametag)
 	else
 		info = info.."\n" .. infotext(S("Nameless Dragon"))
@@ -56,7 +57,7 @@ local function get_binder_desc(self)
 		info = info.."\n" .. infotext(self.age)
 	end
 	if self.color then
-		info = info.."\n" .. infotext(S(self.color), true)
+		info = info.."\n" .. infotext(draconis.color_names[self.color] or correct_name(self.color))
 	end
 	return info
 end
@@ -75,7 +76,7 @@ table.insert(dragon_drops, "draconis:dragon_bone")
 
 for color, hex in pairs(draconis.colors_fire) do
 	minetest.register_craftitem("draconis:scales_fire_dragon_" .. color, {
-		description = S("Fire Dragon Scales") .. "\n" .. infotext(S(color), true),
+		description = S("Fire Dragon Scales") .. "\n" .. infotext(draconis.color_names[color]),
 		inventory_image = "draconis_dragon_scales.png^[multiply:#" .. hex,
 		groups = {dragon_scales = 1}
 	})
@@ -84,7 +85,7 @@ end
 
 for color, hex in pairs(draconis.colors_ice) do
 	minetest.register_craftitem("draconis:scales_ice_dragon_" .. color, {
-		description = S("Ice Dragon Scales") .. "\n" .. infotext(S(color), true),
+		description = S("Ice Dragon Scales") .. "\n" .. infotext(draconis.color_names[color]),
 		inventory_image = "draconis_dragon_scales.png^[multiply:#" .. hex,
 		groups = {dragon_scales = 1}
 	})
@@ -130,7 +131,7 @@ local dragon_eggs = {}
 
 for color in pairs(draconis.colors_fire) do
 	minetest.register_node("draconis:egg_fire_" .. color, {
-		description = S("Fire Dragon Egg") .. "\n" .. infotext(S(color), true),
+		description = S("Fire Dragon Egg") .. "\n" .. infotext(draconis.color_names[color]),
 		drawtype = "mesh",
 		paramtype = "light",
 		sunlight_propagates = true,
@@ -277,7 +278,7 @@ end
 
 for color in pairs(draconis.colors_ice) do
 	minetest.register_node("draconis:egg_ice_" .. color, {
-		description = S("Ice Dragon Egg") .. "\n" .. infotext(S(color), true),
+		description = S("Ice Dragon Egg") .. "\n" .. infotext(draconis.color_names[color]),
 		drawtype = "mesh",
 		paramtype = "light",
 		sunlight_propagates = true,
@@ -552,7 +553,7 @@ local function dragonbinder_place(itemstack, player, pointed_thing)
 			meta:set_string("mob", nil)
 			meta:set_string("dragon_id", nil)
 			meta:set_string("staticdata", nil)
-			meta:set_string("description", "Dragonbinder")
+			meta:set_string("description", S("Dragonbinder"))
 			player:set_wielded_item(itemstack)
 			return itemstack
 		end
@@ -569,7 +570,7 @@ local function dragonbinder_place(itemstack, player, pointed_thing)
 				draconis.dragons[id].stored_in_item = false
 			end
 			draconis.force_storage_save = true
-			local desc = S("Dragonbinder") .. "\n" .. correct_name(mob)
+			local desc = S("Dragonbinder") .. "\n" .. get_mob_name(mob)
 			if nametag ~= "" then
 				desc = desc .. "\n" .. infotext(nametag)
 			end

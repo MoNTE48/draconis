@@ -24,17 +24,7 @@ end)
 
 -- Local Utilities --
 
-local function correct_name(str)
-	if str then
-		if str:match(":") then str = str:split(":")[2] end
-		return (string.gsub(" " .. str, "%W%l", string.upper):sub(2):gsub("_", " "))
-	end
-end
-
-local function infotext(str, format)
-	if format then
-		return minetest.colorize("#a9a9a9", correct_name(str))
-	end
+local function infotext(str)
 	return minetest.colorize("#a9a9a9", str)
 end
 
@@ -193,7 +183,7 @@ register_node("draconis:stone_bricks_frozen", {
 
 for color in pairs(draconis.colors_fire) do
 	register_node("draconis:dragonhide_block_fire_" .. color, {
-		description = S("Fire Dragonhide Block") .. "\n" .. infotext(S(color), true),
+		description = S("Fire Dragonhide Block") .. "\n" .. infotext(draconis.color_names[color]),
 		tiles = {
 			"draconis_dragonhide_block_" .. color .. "_top.png",
 			"draconis_dragonhide_block_" .. color .. "_top.png",
@@ -209,7 +199,7 @@ end
 
 for color in pairs(draconis.colors_ice) do
 	register_node("draconis:dragonhide_block_ice_" .. color, {
-		description = S("Ice Dragonhide Block") .. "\n" .. infotext(S(color), true),
+		description = S("Ice Dragonhide Block") .. "\n" .. infotext(draconis.color_names[color]),
 		tiles = {
 			"draconis_dragonhide_block_" .. color .. "_top.png",
 			"draconis_dragonhide_block_" .. color .. "_top.png",

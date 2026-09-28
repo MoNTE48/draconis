@@ -8,6 +8,8 @@ draconis = {
 	S = minetest.get_translator(minetest.get_current_modname())
 }
 
+local S = draconis.S
+
 local path = minetest.get_modpath("draconis")
 
 -- Global Tables --
@@ -52,6 +54,28 @@ draconis.colors_ice = {
     ["silver"] = "c5e4ed",
     ["slate"] = "4c646b",
     ["white"] = "e4e4e4"
+}
+
+-- Translated display names. Don't reformat S() output (e.g. with correct_name),
+-- it corrupts the translation escape sequence and the text stays untranslated.
+
+draconis.color_names = {
+    ["black"] = S("Black"),
+    ["bronze"] = S("Bronze"),
+    ["gold"] = S("Gold"),
+    ["green"] = S("Green"),
+    ["red"] = S("Red"),
+    ["light_blue"] = S("Light Blue"),
+    ["sapphire"] = S("Sapphire"),
+    ["silver"] = S("Silver"),
+    ["slate"] = S("Slate"),
+    ["white"] = S("White")
+}
+
+draconis.mob_names = {
+    ["draconis:fire_dragon"] = S("Fire Dragon"),
+    ["draconis:ice_dragon"] = S("Ice Dragon"),
+    ["draconis:jungle_wyvern"] = S("Jungle Wyvern")
 }
 
 draconis.global_nodes = {}

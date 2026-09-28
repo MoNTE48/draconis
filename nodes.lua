@@ -619,13 +619,13 @@ local function cool_crucible(pos, ingot)
 		local draconic_ingot = ItemStack(ingot)
 		local ingot_meta = draconic_ingot:get_meta()
 		local ingot_desc = minetest.registered_items[ingot].description
-		local dragon_name = "Unnamed Dragon"
+		local dragon_name = S("Unnamed Dragon")
 		if draconis.dragons[dragon_id]
 		and draconis.dragons[dragon_id].name then
 			dragon_name = draconis.dragons[dragon_id].name
 		end
 		ingot_meta:set_string("dragon_id", dragon_id)
-		ingot_meta:set_string("description", ingot_desc .. "\n(Forged by " .. dragon_name .. ")")
+		ingot_meta:set_string("description", ingot_desc .. "\n" .. S("(Forged by @1)", dragon_name))
 		inv:set_stack("output", 1, draconic_ingot)
 		meta:set_int("cool_perc", 0)
 	end
@@ -1044,12 +1044,12 @@ and register_stairs then
 			name,
 			def.groups,
 			def.tiles,
-			def.description .. " Stairs",
-			def.description .. " Slab",
+			S("@1 Stairs", def.description),
+			S("@1 Slab", def.description),
 			def.sounds,
 			false,
-			def.description .. " Stairs Outer",
-			def.description .. " Stairs Inner"
+			S("@1 Stairs Inner", def.description),
+			S("@1 Stairs Outer", def.description)
 		)
 	end
 end

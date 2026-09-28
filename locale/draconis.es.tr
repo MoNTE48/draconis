@@ -100,3 +100,44 @@ White=Blanco
 Fire Dragon=Dragón de fuego
 Ice Dragon=Dragón de hielo
 Jungle Wyvern=Guiverno de la jungla
+
+Orange=Naranja
+Purple=Morado
+Yellow=Amarillo
+Dark Blue=Azul oscuro
+Blue=Azul
+Male=Macho
+Female=Hembra
+@1 Days Old=Edad: @1 días
+Enter name:=Introduce un nombre:
+Rename=Renombrar
+Set Name=Poner nombre
+Flight Allowed=Vuelo permitido
+Flight Not Allowed=Vuelo no permitido
+Neutral=Neutral
+Aggressive=Agresivo
+Passive=Pasivo
+Wander=Deambular
+Follow=Seguir
+Stay=Quedarse
+Customize=Personalizar
+Wing Color=Color de alas
+Eye Color=Color de ojos
+Body Color=Color del cuerpo
+
+@1 would like to ride as a passenger=@1 quiere montar como pasajero
+Accept=Aceptar
+Decline=Rechazar
+Change View Point=Cambiar vista
+Toggle Pitch Flight=Vuelo por inclinación
+Dragon riding settings=Ajustes de montura del dragón
+
+Allows Player to customize and force tame Dragons=Permite personalizar y domar a la fuerza a los dragones
+Tames pointed Dragon=Doma al dragón señalado
+Sets owner of pointed Dragon=Establece el dueño del dragón señalado
+<name>=<nombre>
+
+@1 Stairs=@1 (escaleras)
+@1 Slab=@1 (losa)
+@1 Stairs Inner=@1 (escalera interior)
+@1 Stairs Outer=@1 (escalera exterior)

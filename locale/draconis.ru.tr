@@ -100,3 +100,44 @@ White=Белый
 Fire Dragon=Огненный Дракон
 Ice Dragon=Ледяной Дракон
 Jungle Wyvern=Виверна Джунглей
+
+Orange=Оранжевый
+Purple=Фиолетовый
+Yellow=Жёлтый
+Dark Blue=Тёмно-синий
+Blue=Синий
+Male=Самец
+Female=Самка
+@1 Days Old=Возраст: @1 дн.
+Enter name:=Введите имя:
+Rename=Переименовать
+Set Name=Дать имя
+Flight Allowed=Полёт разрешён
+Flight Not Allowed=Полёт запрещён
+Neutral=Нейтральный
+Aggressive=Агрессивный
+Passive=Пассивный
+Wander=Бродить
+Follow=Следовать
+Stay=Стоять
+Customize=Настроить
+Wing Color=Цвет крыльев
+Eye Color=Цвет глаз
+Body Color=Цвет тела
+
+@1 would like to ride as a passenger=@1 хочет прокатиться пассажиром
+Accept=Принять
+Decline=Отклонить
+Change View Point=Сменить вид
+Toggle Pitch Flight=Полёт по взгляду
+Dragon riding settings=Настройки езды на драконе
+
+Allows Player to customize and force tame Dragons=Позволяет настраивать и принудительно приручать Драконов
+Tames pointed Dragon=Приручает указанного Дракона
+Sets owner of pointed Dragon=Назначает владельца указанного Дракона
+<name>=<имя>
+
+@1 Stairs=@1 (ступени)
+@1 Slab=@1 (плита)
+@1 Stairs Inner=@1 (внутренние ступени)
+@1 Stairs Outer=@1 (внешние ступени)

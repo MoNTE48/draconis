@@ -86,6 +86,10 @@ local function correct_name(str)
 	end
 end
 
+local function get_mob_name(name)
+	return draconis.mob_names[name] or correct_name(name)
+end
+
 local function get_pointed_mob(a, b)
 	local steps = ceil(vec_dist(a, b))
 
@@ -1615,13 +1619,13 @@ end)
 --------------
 
 minetest.register_privilege("draconis_admin", {
-	description = "Allows Player to customize and force tame Dragons",
+	description = S("Allows Player to customize and force tame Dragons"),
 	give_to_singleplayer = false,
 	give_to_admin = true
 })
 
 minetest.register_chatcommand("tamedragon", {
-	description = "Tames pointed Dragon",
+	description = S("Tames pointed Dragon"),
 	privs = {draconis_admin = true},
 	func = function(name)
 		local player = minetest.get_player_by_name(name)
@@ -1638,9 +1642,9 @@ minetest.register_chatcommand("tamedragon", {
 			if not ent.owner then
 				ent.owner = name
 				ent:memorize("owner", ent.owner)
-				minetest.chat_send_player(name, S("@1 has been tamed!", correct_name(ent.name)))
+				minetest.chat_send_player(name, S("@1 has been tamed!", get_mob_name(ent.name)))
 			else
-				minetest.chat_send_player(name, S("@1 is already tamed.", correct_name(ent.name)))
+				minetest.chat_send_player(name, S("@1 is already tamed.", get_mob_name(ent.name)))
 				particle = "creatura_particle_red.png"
 			end
 			minetest.add_particlespawner({
@@ -1672,8 +1676,8 @@ minetest.register_chatcommand("tamedragon", {
 })
 
 minetest.register_chatcommand("set_dragon_owner", {
-	description = "Sets owner of pointed Dragon",
-	params = "<name>",
+	description = S("Sets owner of pointed Dragon"),
+	params = S("<name>"),
 	privs = {draconis_admin = true},
 	func = function(name, params)
 		local player = minetest.get_player_by_name(name)
@@ -1689,7 +1693,7 @@ minetest.register_chatcommand("set_dragon_owner", {
 			local particle = "creatura_particle_green.png"
 			ent.owner = param_name
 			ent:memorize("owner", ent.owner)
-			minetest.chat_send_player(name, S("@1 is now owned by @2", correct_name(ent.name), param_name))
+			minetest.chat_send_player(name, S("@1 is now owned by @2", get_mob_name(ent.name), param_name))
 			minetest.add_particlespawner({
 				amount = 16,
 				time = 0.25,
@@ -1735,7 +1739,7 @@ minetest.register_chatcommand("revive_dragon", {
 			local particle = "creatura_particle_green.png"
 			ent.hp = ent.max_health
 			ent:memorize("hp", ent.hp)
-			minetest.chat_send_player(name, S("@1 has been revived!", correct_name(ent.name)))
+			minetest.chat_send_player(name, S("@1 has been revived!", get_mob_name(ent.name)))
 			minetest.add_particlespawner({
 				amount = 16,
 				time = 0.25,
@@ -1766,7 +1770,7 @@ minetest.register_chatcommand("revive_dragon", {
 
 minetest.register_chatcommand("dragon_attack_blacklist_add", {
 	description = S("Adds player to attack blacklist"),
-	params = "<name>",
+	params = S("<name>"),
 	privs = {draconis_admin = true},
 	func = function(name, params)
 		local player = minetest.get_player_by_name(name)
@@ -1783,7 +1787,7 @@ minetest.register_chatcommand("dragon_attack_blacklist_add", {
 
 minetest.register_chatcommand("dragon_attack_blacklist_remove", {
 	description = S("Removes player to attack blacklist"),
-	params = "<name>",
+	params = S("<name>"),
 	privs = {draconis_admin = true},
 	func = function(name, params)
 		local player = minetest.get_player_by_name(name)

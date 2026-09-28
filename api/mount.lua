@@ -300,9 +300,9 @@ local function passenger_form(player)
 	local formspec = {
 		"size[6,3.476]",
 		"real_coordinates[true]",
-		"label[0.25,1;" .. name .. " would like to ride as a passenger]",
-		"button_exit[0.25,1.3;2.3,0.8;btn_accept_pssngr;Accept]",
-		"button_exit[3.5,1.3;2.3,0.8;btn_decline_pssngr;Decline]",
+		"label[0.25,1;" .. S("@1 would like to ride as a passenger", name) .. "]",
+		"button_exit[0.25,1.3;2.3,0.8;btn_accept_pssngr;" .. S("Accept") .. "]",
+		"button_exit[3.5,1.3;2.3,0.8;btn_decline_pssngr;" .. S("Decline") .. "]",
 	}
 	return table.concat(formspec, "")
 end
@@ -350,13 +350,14 @@ local function menu_form()
 	local formspec = {
 		"size[6,3.476]",
 		"real_coordinates[true]",
-		"button[0.25,1.3;2.3,0.8;btn_view_point;Change View Point]",
-		"button[3.5,1.3;2.3,0.8;btn_pitch_toggle;Toggle Pitch Flight]",
+		"button[0.25,1.3;2.3,0.8;btn_view_point;" .. S("Change View Point") .. "]",
+		"button[3.5,1.3;2.3,0.8;btn_pitch_toggle;" .. S("Toggle Pitch Flight") .. "]",
 	}
 	return table.concat(formspec, "")
 end
 
 minetest.register_chatcommand("dragon_mount_settings", {
+	description = S("Dragon riding settings"),
 	privs = {
 		interact = true,
 	},

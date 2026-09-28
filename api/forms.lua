@@ -2,6 +2,8 @@
 -- Formspecs --
 ---------------
 
+local S = draconis.S
+
 local ceil = math.ceil
 
 local form_objref = {}
@@ -25,8 +27,8 @@ local function get_rename_formspec(self)
 	local tag = self.nametag or ""
 	local form = {
 		"size[8,4]",
-		"field[0.5,1;7.5,0;name;" .. minetest.formspec_escape("Enter name:") .. ";" .. tag .. "]",
-		"button_exit[2.5,3.5;3,1;mob_rename;" .. minetest.formspec_escape("Rename") .. "]"
+		"field[0.5,1;7.5,0;name;" .. minetest.formspec_escape(S("Enter name:")) .. ";" .. tag .. "]",
+		"button_exit[2.5,3.5;3,1;mob_rename;" .. minetest.formspec_escape(S("Rename")) .. "]"
 	}
 	return table.concat(form, "")
 end
@@ -40,8 +42,21 @@ local function activate_nametag(self)
 	})
 end
 
+local translated_names = {
+	male = S("Male"),
+	female = S("Female"),
+	neutral = S("Neutral"),
+	aggressive = S("Aggressive"),
+	passive = S("Passive"),
+	wander = S("Wander"),
+	follow = S("Follow"),
+	stay = S("Stay")
+}
+
 local function correct_name(str)
 	if str then
+		local name = draconis.mob_names[str] or translated_names[str]
+		if name then return name end
 		if str:match(":") then str = str:split(":")[2] end
 		return (string.gsub(" " .. str, "%W%l", string.upper):sub(2):gsub("_", " "))
 	end
@@ -68,10 +83,10 @@ local function get_dragon_formspec(self)
 	local stamina_ind = "draconis_forms_stamina_bg.png^[lowpart:" .. stamina .. ":draconis_forms_stamina_fg.png"
 	local breath_ind = "draconis_forms_breath_bg.png^[lowpart:" .. breath .. ":draconis_forms_breath_fg.png"
 	-- Settings
-	local fly_allowed = "Flight Allowed"
+	local fly_allowed = S("Flight Allowed")
 	local fly_image = "draconis_forms_flight_allowed.png"
 	if not self.fly_allowed then
-		fly_allowed = "Flight Not Allowed"
+		fly_allowed = S("Flight Not Allowed")
 		fly_image = "draconis_forms_flight_disallowed.png"
 	end
 	local form = {
@@ -81,8 +96,8 @@ local function get_dragon_formspec(self)
 		"bgcolor[#000000;false]",
 		"background[0,0;16,10;draconis_forms_bg_b.png]",
 		"label[6.8,0.8;" .. correct_name(self.name) .. " (" .. correct_name(self.gender) .. ")]",
-		"label[7,1.5;" .. current_age .." Days Old]",
-		"button[6.75,8.75;2.6,0.5;btn_dragon_name;" .. (self.nametag or "Set Name") .. "]",
+		"label[7,1.5;" .. S("@1 Days Old", current_age) .. "]",
+		"button[6.75,8.75;2.6,0.5;btn_dragon_name;" .. (self.nametag or S("Set Name")) .. "]",
 		"model[3,1.7;10,7;mob_mesh;" .. self.mesh .. ";" .. texture .. ";-10,-130;false;false;" .. frame_loop .. ";15]",
 		"image[1.1,1.3;1,1;" .. health_ind .."]",
 		"image[1.1,3.3;1,1;" .. hunger_ind .."]",
@@ -96,7 +111,7 @@ local function get_dragon_formspec(self)
 		"image_button[13.45,0.3;1.9,1.9;" .. fly_image .. ";btn_dragon_fly;;false;false;]"
 	}
 	if minetest.check_player_privs(self.owner, {draconis_admin = true}) then
-		table.insert(form, "button[9.75,8.75;2.6,0.5;btn_customize;Customize]")
+		table.insert(form, "button[9.75,8.75;2.6,0.5;btn_customize;" .. S("Customize") .. "]")
 	end
 	return table.concat(form, "")
 end
@@ -104,6 +119,11 @@ end
 draconis.dragon_api.show_formspec = function(self, player)
 	minetest.show_formspec(player:get_player_name(), "draconis:dragon_forms", get_dragon_formspec(self))
 	form_objref[player:get_player_name()] = self
+end
+
+-- Dropdowns send back the untranslated item string, so S() values also work as field keys
+local function items(...)
+	return table.concat({...}, ",")
 end
 
 local function get_customize_formspec(self)
@@ -116,24 +136,25 @@ local function get_customize_formspec(self)
 		form = {
 			"formspec_version[4]",
 			"size[12,6]",
-			"dropdown[0.5,1.1;3,0.6;drp_wing;Orange,Purple,Red,Yellow;1]",
-			"label[1.1,0.8;Wing Color]",
-			"dropdown[4.5,1.1;3,0.6;drp_eyes;Orange,Red,Green;1]",
-			"label[5.1,0.8;Eye Color]",
-			"dropdown[8.5,1.1;3,0.6;drp_body;Black,Bronze,Green,Red,Gold;1]",
-			"label[9.1,0.8;Body Color]",
+			"dropdown[0.5,1.1;3,0.6;drp_wing;" .. items(S("Orange"), S("Purple"), S("Red"), S("Yellow")) .. ";1]",
+			"label[1.1,0.8;" .. S("Wing Color") .. "]",
+			"dropdown[4.5,1.1;3,0.6;drp_eyes;" .. items(S("Orange"), S("Red"), S("Green")) .. ";1]",
+			"label[5.1,0.8;" .. S("Eye Color") .. "]",
+			"dropdown[8.5,1.1;3,0.6;drp_body;" .. items(S("Black"), S("Bronze"), S("Green"), S("Red"), S("Gold")) .. ";1]",
+			"label[9.1,0.8;" .. S("Body Color") .. "]",
 			"model[1.5,1.7;10,7;mob_mesh;" .. self.mesh .. ";" .. texture .. ";-10,-130;false;false;" .. frame_loop .. ";15]"
 		}
 	elseif self.name == "draconis:ice_dragon" then
 		form = {
 			"formspec_version[4]",
 			"size[12,6]",
-			"dropdown[0.5,1.1;3,0.6;drp_wing;Dark Blue,Purple;1]",
-			"label[1.1,0.8;Wing Color]",
-			"dropdown[4.5,1.1;3,0.6;drp_eyes;Blue,Purple;1]",
-			"label[5.1,0.8;Eye Color]",
-			"dropdown[8.5,1.1;3,0.6;drp_body;Light Blue,Sapphire,Slate,White,Silver;1]",
-			"label[9.1,0.8;Body Color]",
+			"dropdown[0.5,1.1;3,0.6;drp_wing;" .. items(S("Dark Blue"), S("Purple")) .. ";1]",
+			"label[1.1,0.8;" .. S("Wing Color") .. "]",
+			"dropdown[4.5,1.1;3,0.6;drp_eyes;" .. items(S("Blue"), S("Purple")) .. ";1]",
+			"label[5.1,0.8;" .. S("Eye Color") .. "]",
+			"dropdown[8.5,1.1;3,0.6;drp_body;"
+				.. items(S("Light Blue"), S("Sapphire"), S("Slate"), S("White"), S("Silver")) .. ";1]",
+			"label[9.1,0.8;" .. S("Body Color") .. "]",
 			"model[1.5,1.7;10,7;mob_mesh;" .. self.mesh .. ";" .. texture .. ";-10,-130;false;false;" .. frame_loop .. ";15]"
 		}
 	end
@@ -157,10 +178,10 @@ local function get_wyvern_formspec(self)
 	local hunger_ind = "draconis_forms_hunger_bg.png^[lowpart:" .. hunger .. ":draconis_forms_hunger_fg.png"
 	local stamina_ind = "draconis_forms_stamina_bg.png^[lowpart:" .. stamina .. ":draconis_forms_stamina_fg.png"
 	-- Settings
-	local fly_allowed = "Flight Allowed"
+	local fly_allowed = S("Flight Allowed")
 	local fly_image = "draconis_forms_flight_allowed.png"
 	if not self.fly_allowed then
-		fly_allowed = "Flight Not Allowed"
+		fly_allowed = S("Flight Not Allowed")
 		fly_image = "draconis_forms_flight_disallowed.png"
 	end
 	local form = {
@@ -170,7 +191,7 @@ local function get_wyvern_formspec(self)
 		"bgcolor[#000000;false]",
 		"background[0,0;16,10;draconis_forms_bg_b.png]",
 		"label[6.8,0.8;" .. correct_name(self.name) .. "]",
-		"button[6.75,8.75;2.6,0.5;btn_dragon_name;" .. (self.nametag or "Set Name") .. "]",
+		"button[6.75,8.75;2.6,0.5;btn_dragon_name;" .. (self.nametag or S("Set Name")) .. "]",
 		"model[3,1.7;10,7;mob_mesh;" .. self.mesh .. ";" .. texture .. ";-10,-130;false;false;" .. frame_loop .. ";15]",
 		"image[1.1,1.3;1,1;" .. health_ind .."]",
 		"image[1.1,3.3;1,1;" .. hunger_ind .."]",
@@ -302,41 +323,41 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		end
 		local wings = {
 			ice = {
-				["Dark Blue"] = "#07084f",
-				["Purple"] = "#a724ff"
+				[S("Dark Blue")] = "#07084f",
+				[S("Purple")] = "#a724ff"
 			},
 			fire = {
-				["Red"] = "#d20000",
-				["Orange"] = "#d92e00",
-				["Yellow"] = "#edad00",
-				["Purple"] = "#a724ff"
+				[S("Red")] = "#d20000",
+				[S("Orange")] = "#d92e00",
+				[S("Yellow")] = "#edad00",
+				[S("Purple")] = "#a724ff"
 			}
 		}
 		local eyes = {
 			ice = {
-				["Blue"] = "blue",
-				["Purple"] = "purple"
+				[S("Blue")] = "blue",
+				[S("Purple")] = "purple"
 			},
 			fire = {
-				["Red"] = "red",
-				["Orange"] = "orange",
-				["Green"] = "green"
+				[S("Red")] = "red",
+				[S("Orange")] = "orange",
+				[S("Green")] = "green"
 			}
 		}
 		local body = {
 			ice = {
-				["Light Blue"] = 1,
-				["Sapphire"] = 2,
-				["Slate"] = 3,
-				["White"] = 4,
-				["Silver"] = 5
+				[S("Light Blue")] = 1,
+				[S("Sapphire")] = 2,
+				[S("Slate")] = 3,
+				[S("White")] = 4,
+				[S("Silver")] = 5
 			},
 			fire = {
-				["Black"] = 1,
-				["Bronze"] = 2,
-				["Green"] = 3,
-				["Red"] = 4,
-				["Gold"] = 5
+				[S("Black")] = 1,
+				[S("Bronze")] = 2,
+				[S("Green")] = 3,
+				[S("Red")] = 4,
+				[S("Gold")] = 5
 			}
 		}
 		if fields.drp_wing

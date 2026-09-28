@@ -321,9 +321,28 @@ function draconis.get_libri(inventory)
     end
 end
 
+-- Chapters are stored as "dragons,wyverns". Books from older versions keep a
+-- serialized list: only the names are taken from it, it's never deserialized
+local function get_chapters(meta)
+	local chapters = {}
+	for chapter in meta:get_string("chapters"):gmatch("[%w_]+") do
+		if chapter ~= "return" then
+			chapters[#chapters + 1] = chapter
+		end
+	end
+	return chapters
+end
+
+local function has_chapter(meta, chapter)
+	for _, name in ipairs(get_chapters(meta)) do
+		if name == chapter then return true end
+	end
+	return false
+end
+
 function draconis.add_page(inv, chapter)
     local libri, list_i = draconis.get_libri(inv)
-    local chapters = minetest.deserialize(libri:get_meta():get_string("chapters")) or {}
+    local chapters = get_chapters(libri:get_meta())
     if #chapters > 0 then
         for i = 1, #chapters do
 			if chapters[i] == chapter then
@@ -332,7 +351,7 @@ function draconis.add_page(inv, chapter)
         end
     end
 	table.insert(chapters, chapter)
-	libri:get_meta():set_string("chapters", minetest.serialize(chapters))
+	libri:get_meta():set_string("chapters", table.concat(chapters, ","))
 	inv:set_stack("main", list_i, libri)
 	return true
 end
@@ -364,13 +383,15 @@ local function get_libri_text(file, playername)
 end
 
 local function render_element(def, meta, playername)
-	local chapters = (meta and minetest.deserialize(meta:get_string("chapters"))) or {}
+	local chapters = (meta and get_chapters(meta)) or {}
 	local offset_x = def.offset.x
 	local offset_y = def.offset.y
 	local form = ""
 	-- Add text
 	if def.element_type == "label" then
-		local font_size_x = (draconis.libri_font_size[playername] or 1)
+		local font_size_x = tonumber(draconis.libri_font_size[playername]) or 1
+		-- Values saved from client input aren't trusted (NaN fails both checks)
+		if not (font_size_x >= 0.25 and font_size_x <= 1) then font_size_x = 1 end
 		local font_size = (def.font_size or 16) * font_size_x
 		if def.file then
 			local full_text = get_libri_text(def.file, playername)
@@ -460,41 +481,50 @@ minetest.register_craftitem("draconis:libri_draconis", {
 -- Receive Fields --
 --------------------
 
-minetest.register_on_player_receive_fields(function(player, formname, fields)
-	local plyr_name = player:get_player_name()
-	local meta = player:get_wielded_item():get_meta()
-	local page_no
-	for i = 1, #pages do
-		if formname == "draconis:libri_page_" .. i then
-			page_no = i
-			if fields.btn_next
-			and pages[i + 1] then
-				minetest.show_formspec(plyr_name,
-					"draconis:libri_page_" .. i + 1, get_page(i + 1, meta, plyr_name))
-				return true
-			elseif fields.btn_last
-			and pages[i - 1] then
-				minetest.show_formspec(plyr_name,
-					"draconis:libri_page_" .. i - 1, get_page(i - 1, meta, plyr_name))
-				return true
-			end
+-- Clients can send any button, only the ones the page shows are accepted
+local function has_button(page_no, button, meta)
+	for _, element in ipairs(pages[page_no]) do
+		if type(element) == "table"
+		and element.text
+		and element.text:find(button .. ";", 1, true) then
+			return not element.unlock_key or has_chapter(meta, element.unlock_key)
 		end
 	end
-	if fields.btn_dragons then
+	return false
+end
+
+minetest.register_on_player_receive_fields(function(player, formname, fields)
+	local page_no = tonumber(formname:match("^draconis:libri_page_(%d+)$"))
+	if not page_no or not pages[page_no] then return end
+	local plyr_name = player:get_player_name()
+	local meta = player:get_wielded_item():get_meta()
+	if fields.btn_next
+	and pages[page_no + 1]
+	and has_button(page_no, "btn_next", meta) then
+		minetest.show_formspec(plyr_name,
+			"draconis:libri_page_" .. page_no + 1, get_page(page_no + 1, meta, plyr_name))
+		return true
+	elseif fields.btn_last
+	and pages[page_no - 1]
+	and has_button(page_no, "btn_last", meta) then
+		minetest.show_formspec(plyr_name,
+			"draconis:libri_page_" .. page_no - 1, get_page(page_no - 1, meta, plyr_name))
+		return true
+	end
+	if fields.btn_dragons and has_button(page_no, "btn_dragons", meta) then
 		minetest.show_formspec(plyr_name, "draconis:libri_page_" .. 2, get_page(2, meta, plyr_name))
 		return true
 	end
-	if fields.btn_wyverns then
+	if fields.btn_wyverns and has_button(page_no, "btn_wyverns", meta) then
 		minetest.show_formspec(plyr_name, "draconis:libri_page_" .. 5, get_page(5, meta, plyr_name))
 		return true
 	end
-	if fields.btn_draconic_steel then
+	if fields.btn_draconic_steel and has_button(page_no, "btn_draconic_steel", meta) then
 		minetest.show_formspec(plyr_name, "draconis:libri_page_" .. 6, get_page(6, meta, plyr_name))
 		return true
 	end
-	if fields.drp_font_scale
-	and page_no then
-		draconis.libri_font_size[plyr_name] = fields.drp_font_scale
+	if fields.drp_font_scale then
+		draconis.libri_font_size[plyr_name] = tonumber(fields.drp_font_scale)
 		minetest.show_formspec(plyr_name, "draconis:libri_page_" .. page_no, get_page(page_no, meta, plyr_name))
 		return true
 	end

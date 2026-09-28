@@ -24,7 +24,7 @@ local function get_stat(self, stat, stat_max)
 end
 
 local function get_rename_formspec(self)
-	local tag = self.nametag or ""
+	local tag = minetest.formspec_escape(self.nametag or "")
 	local form = {
 		"size[8,4]",
 		"field[0.5,1;7.5,0;name;" .. minetest.formspec_escape(S("Enter name:")) .. ";" .. tag .. "]",
@@ -97,7 +97,7 @@ local function get_dragon_formspec(self)
 		"background[0,0;16,10;draconis_forms_bg_b.png]",
 		"label[6.8,0.8;" .. correct_name(self.name) .. " (" .. correct_name(self.gender) .. ")]",
 		"label[7,1.5;" .. S("@1 Days Old", current_age) .. "]",
-		"button[6.75,8.75;2.6,0.5;btn_dragon_name;" .. (self.nametag or S("Set Name")) .. "]",
+		"button[6.75,8.75;2.6,0.5;btn_dragon_name;" .. minetest.formspec_escape(self.nametag or S("Set Name")) .. "]",
 		"model[3,1.7;10,7;mob_mesh;" .. self.mesh .. ";" .. texture .. ";-10,-130;false;false;" .. frame_loop .. ";15]",
 		"image[1.1,1.3;1,1;" .. health_ind .."]",
 		"image[1.1,3.3;1,1;" .. hunger_ind .."]",
@@ -191,7 +191,7 @@ local function get_wyvern_formspec(self)
 		"bgcolor[#000000;false]",
 		"background[0,0;16,10;draconis_forms_bg_b.png]",
 		"label[6.8,0.8;" .. correct_name(self.name) .. "]",
-		"button[6.75,8.75;2.6,0.5;btn_dragon_name;" .. (self.nametag or S("Set Name")) .. "]",
+		"button[6.75,8.75;2.6,0.5;btn_dragon_name;" .. minetest.formspec_escape(self.nametag or S("Set Name")) .. "]",
 		"model[3,1.7;10,7;mob_mesh;" .. self.mesh .. ";" .. texture .. ";-10,-130;false;false;" .. frame_loop .. ";15]",
 		"image[1.1,1.3;1,1;" .. health_ind .."]",
 		"image[1.1,3.3;1,1;" .. hunger_ind .."]",
@@ -217,7 +217,8 @@ end
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
 	local name = player:get_player_name()
-	if not form_objref[name] or not form_objref[name].object then
+	if not form_objref[name] or not form_objref[name].object:get_pos() then
+		form_objref[name] = nil
 		return
 	end
 	local ent = form_objref[name]
@@ -258,7 +259,9 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		if fields.btn_dragon_name then
 			minetest.show_formspec(name, "draconis:set_name", get_rename_formspec(ent))
 		end
-		if fields.btn_customize then
+		-- The button is only shown to admins, but clients can send any field
+		if fields.btn_customize
+		and minetest.check_player_privs(player, {draconis_admin = true}) then
 			minetest.show_formspec(name, "draconis:customize", get_customize_formspec(ent))
 		end
 		if fields.quit or fields.key_enter then
@@ -317,6 +320,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		end
 	end
 	if formname == "draconis:customize" then
+		if not minetest.check_player_privs(player, {draconis_admin = true}) then return end
 		local type = "ice"
 		if ent.name == "draconis:fire_dragon" then
 			type = "fire"
@@ -383,4 +387,8 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			form_objref[name] = nil
 		end
 	end
+end)
+
+minetest.register_on_leaveplayer(function(player)
+	form_objref[player:get_player_name()] = nil
 end)

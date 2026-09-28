@@ -290,18 +290,21 @@ local function update_fire_form(meta)
 		end
 		formspec = table.concat({
 			"formspec_version[3]",
-			"size[11,10]",
-			"image[0,0;11,10;draconis_form_forge_bg.png]",
+			"size[12.25,10]",
+			"image[0,0;12.25,10;draconis_form_forge_bg.png]",
+			"list[current_player;main;0.625,5;9,4;]",
+			-- The Forge part of the background is shifted by 0.6
+			"container[0.6,0]",
 			-- Melting Percentage
 			melt,
 			-- Cooling Percentage
 			elbow_up,
 			-- Cooling Percentage P2
 			elbow_down,
-			"list[current_player;main;0.65,5;8,4;]",
 			"list[context;input;2.325,1.05;1,1;]",
 			"list[context;crucible;5.175,1.05;1,1;]",
 			"list[context;output;7.65,3.5;1,1;]",
+			"container_end[]",
 			"listring[current_player;main]",
 			"listring[context;input]",
 			"listring[current_player;main]",
@@ -313,15 +316,18 @@ local function update_fire_form(meta)
 	else
 		formspec = table.concat({
 			"formspec_version[3]",
-			"size[11,10]",
-			"image[0,0;11,10;draconis_form_forge_bg.png]",
+			"size[12.25,10]",
+			"image[0,0;12.25,10;draconis_form_forge_bg.png]",
+			"list[current_player;main;0.625,5;9,4;]",
+			-- The Forge part of the background is shifted by 0.6
+			"container[0.6,0]",
 			"image[3.475,1.3;1.56,0.39;draconis_form_fire_empty.png^[transformR270]",
 			"image[6.35,1.325;1.95,0.39;draconis_form_fire_elbow_up_empty.png^[transformR270]",
 			"image[7.91,1.7;0.39,1.69;draconis_form_fire_elbow_down_empty.png^[transformFY]]",
-			"list[current_player;main;0.65,5;8,4;]",
 			"list[context;input;2.325,1.05;1,1;]",
 			"list[context;crucible;5.175,1.05;1,1;]",
 			"list[context;output;7.65,3.5;1,1;]",
+			"container_end[]",
 			"listring[current_player;main]",
 			"listring[context;input]",
 			"listring[current_player;main]",
@@ -361,15 +367,18 @@ local function update_ice_form(meta)
 		end
 		formspec = table.concat({
 			"formspec_version[3]",
-			"size[11,10]",
-			"image[0,0;11,10;draconis_form_forge_bg.png]",
+			"size[12.25,10]",
+			"image[0,0;12.25,10;draconis_form_forge_bg.png]",
+			"list[current_player;main;0.625,5;9,4;]",
+			-- The Forge part of the background is shifted by 0.6
+			"container[0.6,0]",
 			-- Cooling Percentage
 			elbow_up,
 			-- Cooling Percentage P2
 			elbow_down,
-			"list[current_player;main;0.65,5;8,4;]",
 			"list[context;crucible;5.175,1.05;1,1;]",
 			"list[context;output;7.65,3.5;1,1;]",
+			"container_end[]",
 			"listring[current_player;main]",
 			"listring[context;crucible]",
 			"listring[current_player;main]",
@@ -379,13 +388,16 @@ local function update_ice_form(meta)
 	else
 		formspec = table.concat({
 			"formspec_version[3]",
-			"size[11,10]",
-			"image[0,0;11,10;draconis_form_forge_bg.png]",
+			"size[12.25,10]",
+			"image[0,0;12.25,10;draconis_form_forge_bg.png]",
+			"list[current_player;main;0.625,5;9,4;]",
+			-- The Forge part of the background is shifted by 0.6
+			"container[0.6,0]",
 			"image[6.35,1.325;1.95,0.39;draconis_form_fire_elbow_up_empty.png^[transformR270]",
 			"image[7.91,1.7;0.39,1.69;draconis_form_fire_elbow_down_empty.png^[transformFY]]",
-			"list[current_player;main;0.65,5;8,4;]",
 			"list[context;crucible;5.175,1.05;1,1;]",
 			"list[context;output;7.65,3.5;1,1;]",
+			"container_end[]",
 			"listring[current_player;main]",
 			"listring[context;crucible]",
 			"listring[current_player;main]",

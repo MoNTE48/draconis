@@ -2,6 +2,7 @@ local mod_storage = minetest.get_mod_storage()
 
 local data = {
     dragons = minetest.deserialize(mod_storage:get_string("dragons")) or {},
+    dead_dragons = minetest.deserialize(mod_storage:get_string("dead_dragons")) or {},
     bonded_dragons = minetest.deserialize(mod_storage:get_string("bonded_dragons")) or {},
     aux_key_setting = minetest.deserialize(mod_storage:get_string("aux_key_setting")) or {},
     attack_blacklist = minetest.deserialize(mod_storage:get_string("attack_blacklist")) or {},
@@ -10,6 +11,7 @@ local data = {
 
 local function save()
     mod_storage:set_string("dragons", minetest.serialize(data.dragons))
+    mod_storage:set_string("dead_dragons", minetest.serialize(data.dead_dragons))
     mod_storage:set_string("bonded_dragons", minetest.serialize(data.bonded_dragons))
     mod_storage:set_string("aux_key_setting", minetest.serialize(data.aux_key_setting))
     mod_storage:set_string("attack_blacklist", minetest.serialize(data.attack_blacklist))

@@ -246,6 +246,7 @@ creatura.register_mob("draconis:fire_dragon", {
 		end
 	end,
 	death_func = function(self)
+		draconis.mark_dragon_dead(self.dragon_id)
 		self:clear_action()
 		self:clear_utility()
 		self:animate("death")

@@ -213,15 +213,24 @@ end
 function draconis.generate_id()
 	local idst = ""
 	for _ = 0, 5 do idst = idst .. (random(0, 9)) end
-	if draconis.dragons[idst] then
+	if draconis.dragons[idst] or draconis.dead_dragons[idst] then
 		local fail_safe = 20
-		while draconis.dragons[idst]
+		while (draconis.dragons[idst] or draconis.dead_dragons[idst])
 		and fail_safe > 0 do
 			for _ = 0, 5 do idst = idst .. (random(0, 9)) end
 			fail_safe = fail_safe - 1
 		end
 	end
 	return idst
+end
+
+-- Forgets a dead Dragon: its entry is removed and the id is kept as dead,
+-- so a stale copy of the Dragon in an unloaded area can't come back to life
+function draconis.mark_dragon_dead(id)
+	if not id or draconis.dead_dragons[id] then return end
+	draconis.dragons[id] = nil
+	draconis.dead_dragons[id] = true
+	draconis.force_storage_save = true
 end
 
 -------------------
@@ -1698,6 +1707,10 @@ minetest.register_chatcommand("set_dragon_owner", {
 			ent.owner = param_name
 			ent:memorize("owner", ent.owner)
 			ent.despawn_after = ent:memorize("despawn_after", false)
+			if ent.dragon_id and draconis.dragons[ent.dragon_id] then
+				-- Unlink the previous owner's Dragonbinder
+				draconis.dragons[ent.dragon_id].binder_token = nil
+			end
 			minetest.chat_send_player(name, S("@1 is now owned by @2", get_mob_name(ent.name), param_name))
 			minetest.add_particlespawner({
 				amount = 16,
@@ -1744,6 +1757,9 @@ minetest.register_chatcommand("revive_dragon", {
 			local particle = "creatura_particle_green.png"
 			ent.hp = ent.max_health
 			ent:memorize("hp", ent.hp)
+			if ent.dragon_id then
+				draconis.dead_dragons[ent.dragon_id] = nil
+			end
 			minetest.chat_send_player(name, S("@1 has been revived!", get_mob_name(ent.name)))
 			minetest.add_particlespawner({
 				amount = 16,
@@ -1958,12 +1974,26 @@ function draconis.dragon_activate(self)
 			end
 		end
 	end
+	if self.hp <= 0 then
+		-- Corpses aren't registered as living Dragons
+		draconis.mark_dragon_dead(self.dragon_id)
+		return
+	end
+	if draconis.dead_dragons[self.dragon_id] then
+		-- A stale copy of a Dragon that died
+		self.object:remove()
+		return
+	end
+	-- A Dragon found out of its Dragonbinder stays, and the Dragonbinder is unlinked
+	local binder_token = not global_data.stored_in_item and global_data.binder_token or nil
 	draconis.dragons[self.dragon_id] = {
 		last_pos = self.object:get_pos(),
 		owner = self.owner or nil,
+		mob = self.name,
 		staticdata = self:get_staticdata(),
 		removal_queue = global_data.removal_queue or {},
-		stored_in_item = global_data.stored_in_item or false
+		stored_in_item = false,
+		binder_token = binder_token
 	}
 	local owner = draconis.dragons[self.dragon_id].owner
 	if owner
@@ -2110,21 +2140,25 @@ function draconis.dragon_step(self, dtime)
 	end
 	-- Global Info
 	if self.hp <= 0 then
-		draconis.dragons[self.dragon_id] = nil
+		draconis.mark_dragon_dead(self.dragon_id)
 		return
 	end
 	local global_data = draconis.dragons[self.dragon_id] or {}
+	if global_data.stored_in_item then
+		-- Another copy of this Dragon was stored in a Dragonbinder
+		self.object:remove()
+		return
+	end
 	draconis.dragons[self.dragon_id] = {
 		last_pos = self.object:get_pos(),
 		owner = self.owner or nil,
 		name = self.nametag or nil,
+		mob = self.name,
 		staticdata = self:get_staticdata(),
 		removal_queue = global_data.removal_queue or {},
-		stored_in_item = global_data.stored_in_item or false
+		stored_in_item = false,
+		binder_token = global_data.binder_token
 	}
-	if draconis.dragons[self.dragon_id].stored_in_item then
-		self.object:remove()
-	end
 end
 
 -- Wyvern

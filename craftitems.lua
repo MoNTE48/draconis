@@ -430,37 +430,91 @@ end
 
 -- API --
 
-local function capture(player, ent)
-	if not player:is_player()
-	or not player:get_inventory() then
-		return false
+-- A Dragonbinder only keeps the Dragon's id and a token shared with the Dragon's record.
+-- The stored Dragon is kept in the record, so item metadata can't spawn or copy anything
+
+local binder_mobs = {
+	["draconis:fire_dragon"] = true,
+	["draconis:ice_dragon"] = true
+}
+
+local function new_binder_token()
+	local token = ""
+	for _ = 1, 4 do
+		token = token .. string.format("%04x", math.random(0, 0xffff))
 	end
-	local stack = player:get_wielded_item()
-	local meta = stack:get_meta()
-	if not meta:get_string("staticdata")
-	or meta:get_string("staticdata") == "" then
-		if not ent.dragon_id then return end
-		local stored_aging = meta:get_int("stored_aging") or 0
-		draconis.set_color_string(ent)
-		meta:set_string("mob", ent.name)
-		meta:set_string("dragon_id", ent.dragon_id)
-		meta:set_string("staticdata", ent:get_staticdata())
-		meta:set_string("nametag", ent.nametag or S("Nameless Dragon"))
-		meta:set_string("description", get_binder_desc(ent))
-		if stored_aging > 0 then
-			meta:set_int("timestamp", os.time())
+	return token
+end
+
+-- Records saved before they had the mob name: eye colors differ between Dragons
+local function get_record_mob(dragon)
+	local data = minetest.deserialize(dragon.staticdata or "")
+	local eyes = type(data) == "table" and type(data.perm_data) == "table" and data.perm_data.eye_color
+	if eyes == "blue" or eyes == "purple" then
+		return "draconis:ice_dragon"
+	elseif eyes == "green" or eyes == "orange" or eyes == "red" then
+		return "draconis:fire_dragon"
+	end
+end
+
+local function clear_binder(itemstack)
+	local meta = itemstack:get_meta()
+	for _, key in ipairs({"dragon_id", "binder_token", "mob", "staticdata", "nametag", "timestamp", "description"}) do
+		meta:set_string(key, "")
+	end
+	return itemstack
+end
+
+-- Returns the record of the Dragon linked to the Dragonbinder, if the link is valid
+local function get_linked_dragon(meta, player)
+	local id = meta:get_string("dragon_id")
+	local dragon = id ~= "" and draconis.dragons[id]
+	if not dragon then return end
+	local token = meta:get_string("binder_token")
+	if token == "" then
+		-- Dragonbinders from before tokens keep the Dragon they hold, or the owner's link,
+		-- unless another Dragonbinder was linked since
+		if dragon.binder_token
+		or not (dragon.stored_in_item or dragon.owner == player:get_player_name()) then
+			return
 		end
-		player:set_wielded_item(stack)
-		if draconis.dragons[ent.dragon_id] then
-			draconis.dragons[ent.dragon_id].stored_in_item = true
+		dragon.mob = dragon.mob or get_record_mob(dragon)
+		token = new_binder_token()
+		dragon.binder_token = token
+		for _, key in ipairs({"mob", "staticdata", "nametag", "timestamp"}) do
+			meta:set_string(key, "")
 		end
-		ent.object:remove()
+		meta:set_string("binder_token", token)
 		draconis.force_storage_save = true
-		return stack
-	else
-		minetest.chat_send_player(player:get_player_name(), S("This Dragonbinder already contains a Dragon"))
-		return false
 	end
+	if dragon.binder_token == token then
+		return dragon, id
+	end
+end
+
+local function capture(ent, itemstack, token)
+	local dragon = draconis.dragons[ent.dragon_id]
+	if not dragon
+	or dragon.stored_in_item
+	or ent.hp <= 0
+	or ent.rider then
+		return itemstack
+	end
+	local meta = itemstack:get_meta()
+	token = token or new_binder_token()
+	draconis.set_color_string(ent)
+	dragon.mob = ent.name
+	dragon.staticdata = ent:get_staticdata()
+	dragon.last_pos = ent.object:get_pos()
+	dragon.stored_in_item = true
+	dragon.binder_token = token
+	dragon.stored_at = meta:get_int("stored_aging") > 0 and os.time() or nil
+	meta:set_string("dragon_id", ent.dragon_id)
+	meta:set_string("binder_token", token)
+	meta:set_string("description", get_binder_desc(ent))
+	ent.object:remove()
+	draconis.force_storage_save = true
+	return itemstack
 end
 
 local function get_dragon_by_id(dragon_id)
@@ -476,10 +530,18 @@ end
 
 local function dragonbinder_use(itemstack, player, pointed_thing)
 	local meta = itemstack:get_meta()
-	local staticdata = meta:get_string("staticdata")
-	if staticdata ~= "" then return end -- Skip func if Horn contains Dragon
-	local mob = meta:get_string("mob")
-	local id = meta:get_string("dragon_id")
+	local dragon, id = get_linked_dragon(meta, player)
+	if not dragon
+	and meta:get_string("dragon_id") ~= "" then -- Clear data if linked Dragon is dead or linked to another Dragonbinder
+		return clear_binder(itemstack)
+	end
+	if dragon
+	and dragon.stored_in_item then -- Skip func if Dragonbinder contains Dragon
+		if pointed_thing.type == "object" then
+			minetest.chat_send_player(player:get_player_name(), S("This Dragonbinder already contains a Dragon"))
+		end
+		return itemstack
+	end
 	local stored_aging = meta:get_int("stored_aging") or 0
 	if player:get_player_control().sneak then
 		if stored_aging < 1 then
@@ -492,99 +554,69 @@ local function dragonbinder_use(itemstack, player, pointed_thing)
 		player:set_wielded_item(itemstack)
 		return itemstack
 	end
-	if id ~= "" then -- If the horn has a linked Dragon
-		if not draconis.dragons[id] then -- Clear data if linked Dragon is dead
-			meta:set_string("mob", nil)
-			meta:set_string("dragon_id", nil)
-			meta:set_string("staticdata", nil)
-			meta:set_string("description", S("Dragonbinder"))
-			player:set_wielded_item(itemstack)
-			return itemstack
-		end
-		local ent = pointed_thing.ref and pointed_thing.ref:get_luaentity()
+	local ent = pointed_thing.ref and pointed_thing.ref:get_luaentity()
+	if dragon then -- If the Dragonbinder has a linked Dragon
 		if ent
-		and ent.name:match("^draconis:")
-		and ent.dragon_id
-		and ent.dragon_id == id
-		and not ent.rider then -- Store Dragon if linked to Horn
-			return capture(player, ent)
+		and ent.dragon_id == id then -- Store Dragon if linked to Dragonbinder
+			return capture(ent, itemstack, dragon.binder_token)
 		end
 		-- Teleport linked Dragon if not pointed
-		local last_pos = draconis.dragons[id].last_pos
 		ent = get_dragon_by_id(id)
-		if draconis.dragons[id].stored_in_item then return itemstack end
-		if not ent then
-			table.insert(draconis.dragons[id].removal_queue, last_pos)
-			minetest.add_entity(player:get_pos(), mob, draconis.dragons[id].staticdata)
-		else
+		if ent then
 			ent.object:set_pos(player:get_pos())
+		elseif binder_mobs[dragon.mob] then
+			dragon.removal_queue = dragon.removal_queue or {}
+			table.insert(dragon.removal_queue, dragon.last_pos)
+			minetest.add_entity(player:get_pos(), dragon.mob, dragon.staticdata)
 		end
 		minetest.chat_send_player(player:get_player_name(), S("Teleporting Dragon"))
-	else -- Link Dragon to Horn
-		local ent = pointed_thing.ref and pointed_thing.ref:get_luaentity()
-		if ent
-		and ent.name:match("^draconis:")
-		and ent.dragon_id
-		and ent.owner
-		and ent.owner == player:get_player_name()
-		and not ent.rider then
-			return capture(player, ent)
-		end
+	elseif ent -- Link Dragon to Dragonbinder
+	and binder_mobs[ent.name]
+	and ent.dragon_id
+	and ent.owner
+	and ent.owner == player:get_player_name() then
+		return capture(ent, itemstack)
 	end
 	return itemstack
 end
 
 local function dragonbinder_place(itemstack, player, pointed_thing)
-	local meta = itemstack:get_meta()
 	local pos = pointed_thing.above
 	local under = pointed_thing.type == "node" and pointed_thing.under
 	local node_def = creatura.get_node_def(under)
 	if node_def.on_rightclick then
 		return node_def.on_rightclick(under, minetest.get_node(under), player, itemstack)
 	end
-	if pos
-	and not minetest.is_protected(pos, player:get_player_name()) then
-		pos.y = pos.y + 3
-		local mob = meta:get_string("mob")
-		local staticdata = meta:get_string("staticdata")
-		local nametag = meta:get_string("nametag") or S("Nameless Dragon")
-		local id = meta:get_string("dragon_id")
-		if not draconis.dragons[id] then -- Clear data if linked Dragon is dead
-			meta:set_string("mob", nil)
-			meta:set_string("dragon_id", nil)
-			meta:set_string("staticdata", nil)
-			meta:set_string("description", S("Dragonbinder"))
-			player:set_wielded_item(itemstack)
-			return itemstack
+	if not pos
+	or minetest.is_protected(pos, player:get_player_name()) then return end
+	local meta = itemstack:get_meta()
+	local dragon = get_linked_dragon(meta, player)
+	if not dragon then
+		if meta:get_string("dragon_id") ~= "" then -- Clear data if linked Dragon is dead or linked to another Dragonbinder
+			return clear_binder(itemstack)
 		end
-		if staticdata == ""
-		and id ~= ""
-		and draconis.dragons[id]
-		and draconis.dragons[id].stored_in_item then
-			staticdata = draconis.dragons[id].staticdata
-		end
-		if staticdata ~= "" then
-			local ent = minetest.add_entity(pos, mob, staticdata)
-			if id ~= ""
-			and draconis.dragons[id] then
-				draconis.dragons[id].stored_in_item = false
-			end
-			draconis.force_storage_save = true
-			local desc = S("Dragonbinder") .. "\n" .. get_mob_name(mob)
-			if nametag ~= "" then
-				desc = desc .. "\n" .. infotext(nametag)
-			end
-			meta:set_string("staticdata", nil)
-			meta:set_string("description", desc)
-			if ent and meta:get_int("timestamp") > 0 then
-				local time = meta:get_int("timestamp")
-				local diff = os.time() - time
-				ent:get_luaentity().time_in_horn = diff
-				meta:set_int("timestamp", os.time())
-			end
-			return itemstack
-		end
+		return
 	end
+	if not dragon.stored_in_item
+	or not binder_mobs[dragon.mob] then
+		return itemstack
+	end
+	pos.y = pos.y + 3
+	local time_in_horn = dragon.stored_at and os.time() - dragon.stored_at
+	-- Cleared first, activation unlinks Dragonbinders of Dragons found out of them
+	dragon.stored_in_item = false
+	local object = minetest.add_entity(pos, dragon.mob, dragon.staticdata)
+	local ent = object and object:get_luaentity()
+	if not ent then
+		dragon.stored_in_item = true
+		return itemstack
+	end
+	ent.time_in_horn = time_in_horn
+	draconis.force_storage_save = true
+	local desc = S("Dragonbinder") .. "\n" .. get_mob_name(dragon.mob)
+	desc = desc .. "\n" .. infotext(ent.nametag or S("Nameless Dragon"))
+	meta:set_string("description", desc)
+	return itemstack
 end
 
 minetest.register_craftitem("draconis:dragonbinder", {

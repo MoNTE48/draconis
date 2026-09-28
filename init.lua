@@ -17,6 +17,7 @@ local path = minetest.get_modpath("draconis")
 local storage = dofile(path.."/storage.lua")
 
 draconis.dragons = storage.dragons
+draconis.dead_dragons = storage.dead_dragons
 draconis.bonded_dragons = storage.bonded_dragons
 draconis.aux_key_setting = storage.aux_key_setting
 draconis.attack_blacklist = storage.attack_blacklist

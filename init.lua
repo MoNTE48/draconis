@@ -215,17 +215,24 @@ minetest.register_node("draconis:spawn_node", {
     drawtype = "airlike"
 })
 
+-- Spawn Dragons from legacy nodes and from spawn nodes placed by older mapgen
+-- (creatura no longer spawns anything from creatura:spawn_node)
 minetest.register_abm({
     label = "Fix Spawn Nodes",
-    nodenames = {"draconis:spawn_node"},
+    nodenames = {"draconis:spawn_node", "creatura:spawn_node"},
     interval = 10,
     chance = 1,
-    action = function(pos)
+    action = function(pos, node)
         local meta = minetest.get_meta(pos)
-        local mob = meta:get_string("name")
-        minetest.set_node(pos, {name = "creatura:spawn_node"})
-        if mob ~= "" then
-            meta:set_string("mob", mob)
+        local mob = meta:get_string(node.name == "draconis:spawn_node" and "name" or "mob")
+        local gender = meta:get_string("gender")
+        if node.name == "creatura:spawn_node"
+        and not mob:match("^draconis:") then
+            return
+        end
+        minetest.remove_node(pos)
+        if minetest.registered_entities[mob] then
+            draconis.spawn_nest_dragon(pos, mob, gender ~= "" and gender or nil)
         end
     end,
 })

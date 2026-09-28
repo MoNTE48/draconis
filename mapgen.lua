@@ -79,6 +79,16 @@ local function get_nearest_player(pos)
 	return dist or 100, closest_player
 end
 
+function draconis.spawn_nest_dragon(pos, mob, gender)
+	local object = minetest.add_entity(pos, mob)
+	local ent = object and object:get_luaentity()
+	if not ent then return end
+	if gender then
+		ent.gender = ent:memorize("gender", gender)
+	end
+	ent.nest_pos = ent:memorize("nest_pos", vector.new(pos))
+end
+
 local function is_cold_biome(pos)
 	local data = minetest.get_biome_data(pos)
 	return data.heat < 45 and data.humidity < 75
@@ -205,10 +215,7 @@ local function generate_fire_dragon_nest(minp, maxp, area, data)
 	end
 
 	minetest.after(0.2, function()
-		minetest.add_node({x = center_x, y = center_y, z = center_z}, {name = "creatura:spawn_node"})
-		local meta = minetest.get_meta({x = center_x, y = center_y, z = center_z})
-		meta:set_string("mob", "draconis:fire_dragon")
-		meta:set_string("gender", gender)
+		draconis.spawn_nest_dragon(pos, "draconis:fire_dragon", gender)
 		local _, closest_player = get_nearest_player(pos)
 		if closest_player then
 			local name = closest_player:get_player_name()
@@ -330,10 +337,7 @@ local function generate_ice_dragon_nest(minp, maxp, area, data)
 	end
 
 	minetest.after(0.2, function()
-		minetest.add_node({x = center_x, y = center_y, z = center_z}, {name = "creatura:spawn_node"})
-		local meta = minetest.get_meta({x = center_x, y = center_y, z = center_z})
-		meta:set_string("mob", "draconis:ice_dragon")
-		meta:set_string("gender", gender)
+		draconis.spawn_nest_dragon(pos, "draconis:ice_dragon", gender)
 		local _, closest_player = get_nearest_player(pos)
 		if closest_player then
 			local name = closest_player:get_player_name()
@@ -424,10 +428,7 @@ local function generate_fire_dragon_cavern(minp, maxp, area, data)
 	end
 
 	minetest.after(0.2, function()
-		minetest.add_node({x = center_x, y = center_y, z = center_z}, {name = "creatura:spawn_node"})
-		local meta = minetest.get_meta({x = center_x, y = center_y, z = center_z})
-		meta:set_string("mob", "draconis:fire_dragon")
-		meta:set_string("gender", gender)
+		draconis.spawn_nest_dragon(pos, "draconis:fire_dragon", gender)
 		local _, closest_player = get_nearest_player(pos)
 		if closest_player then
 			local name = closest_player:get_player_name()
@@ -516,10 +517,7 @@ local function generate_ice_dragon_cavern(minp, maxp, area, data)
 	end
 
 	minetest.after(0.2, function()
-		minetest.add_node({x = center_x, y = center_y, z = center_z}, {name = "creatura:spawn_node"})
-		local meta = minetest.get_meta({x = center_x, y = center_y, z = center_z})
-		meta:set_string("mob", "draconis:ice_dragon")
-		meta:set_string("gender", gender)
+		draconis.spawn_nest_dragon(pos, "draconis:ice_dragon", gender)
 		local _, closest_player = get_nearest_player(pos)
 		if closest_player then
 			local name = closest_player:get_player_name()

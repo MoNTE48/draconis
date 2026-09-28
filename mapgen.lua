@@ -6,9 +6,9 @@
 -- Settings --
 --------------
 
-local nest_spawning = minetest.settings:get("nest_spawning", true)
+local nest_spawning = minetest.settings:get_bool("nest_spawning", true)
 
-local cavern_spawning = minetest.settings:get("cavern_spawning", false)
+local cavern_spawning = minetest.settings:get_bool("cavern_spawning", false)
 
 local nest_spawn_rate = tonumber(minetest.settings:get("nest_spawn_rate")) or 128
 

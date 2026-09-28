@@ -709,12 +709,13 @@ local function damage_objects(self, pos, radius)
 		end
 		if ent and ent.name == "__builtin:item" then
 			local stack = ItemStack(ent.itemstring)
+			local stack_max = stack:get_stack_max()
 			if stack
-			and stack:get_count() > 98
+			and stack:get_count() >= stack_max
 			and stack:get_name():match("stone")
 			and minetest.get_item_group(stack:get_name(), "cracky") > 0 then
-				local dragonstone_no = floor(stack:get_count() / 99)
-				local leftover_no = stack:get_count() - 99 * dragonstone_no
+				local dragonstone_no = floor(stack:get_count() / stack_max)
+				local leftover_no = stack:get_count() - stack_max * dragonstone_no
 				if self.name == "draconis:ice_dragon" then
 					minetest.add_item(object:get_pos(), "draconis:dragonstone_block_ice " .. dragonstone_no)
 				end

@@ -122,6 +122,13 @@ local function shared_owner(obj1, obj2)
 	return false
 end
 
+-- Targets a mob never attacks, even when set by another mob or by a punch
+local function is_forbidden_target(self, target)
+	return target == self.object
+		or (target:is_player() and target:get_player_name() == self.owner)
+		or shared_owner(self, target)
+end
+
 local function get_target_group(target, radius)
 	local pos = target:get_pos()
 	local objects = minetest.get_objects_in_area(vec_sub(pos, radius or 8), vec_add(pos, radius or 8))
@@ -137,13 +144,15 @@ local function get_target_group(target, radius)
 end
 
 local function find_target(self, list)
-	local owner = self.owner and minetest.get_player_by_name(self.owner)
-	local targets = creatura.get_nearby_players(self)
-	if #targets > 0 then -- If there are players nearby
-		local target = targets[random(#targets)]
-		local is_creative = target:is_player() and minetest.is_creative_enabled(target)
-		local is_owner = owner and target == owner
-		if is_creative or is_owner then targets = {} end
+	local targets = {}
+	for _, player in ipairs(creatura.get_nearby_players(self)) do
+		local name = player:get_player_name()
+		-- Owners, creative and blacklisted players aren't attacked
+		if name ~= self.owner
+		and not minetest.is_creative_enabled(name)
+		and not draconis.attack_blacklist[name] then
+			targets[#targets + 1] = player
+		end
 	end
 	targets = (#targets < 1 and list and creatura.get_nearby_objects(self, list)) or targets
 	if #targets < 1 then return end
@@ -778,14 +787,21 @@ creatura.register_utility("draconis:fly_and_roost", function(self, speed_x)
 		local pos = self.object:get_pos()
 		if not pos then return end
 		state_timer = state_timer - _self.dtime
+		-- Tamed Dragons only fly when flight is allowed
+		local can_fly = not self.owner or self.fly_allowed
+		if not is_landed and not can_fly then
+			is_landed = true
+			landing = true
+		end
 		if not self:get_action() then
 			-- Change States
 			if state_timer <= 0 then
 				state_timer = random(10, 120)
-				is_landed = not is_landed
-				if is_landed then
+				if not is_landed then
+					is_landed = true
 					landing = true
-				else
+				elseif can_fly then
+					is_landed = false
 					draconis.action_takeoff(self, 3)
 					return
 				end
@@ -1115,9 +1131,9 @@ creatura.register_utility("draconis:follow_player", function(self, player)
 				end
 			else
 				local height_diff = tgt_pos.y - pos.y
-				if (height_diff > 8
-				or dist_to_ground > 2)
-				or not self.flight_allowed then
+				if self.fly_allowed
+				and (height_diff > 8
+				or dist_to_ground > 2) then
 					creatura.action_move(_self, tgt_pos, 2, "draconis:fly_simple", 1, "fly")
 				else
 					creatura.action_move(_self, tgt_pos, 3, "creatura:context_based_steering", 0.5, "walk")
@@ -1171,6 +1187,10 @@ draconis.dragon_behavior = {
 			local skip = self.age < 20 or stance == "passive"
 			if skip then return 0 end -- Young/Passive Dragons don't attack
 			local target = self._target
+			if target and is_forbidden_target(self, target) then
+				self._target = nil
+				return 0
+			end
 			if not target then
 				if stance ~= "aggressive" then return 0 end -- Neutral Dragons with no set target
 				local target_list = draconis[self.name:split(":")[2] .. "_targets"]
@@ -1314,7 +1334,7 @@ draconis.wyvern_behavior = {
 	{ -- Wander (Flight)
 		utility = "draconis:aerial_wander",
 		get_score = function(self)
-			if self.owner and not self.flight_allowed then return 0 end
+			if self.owner and not self.fly_allowed then return 0 end
 			if self.in_liquid then
 				if self._target then
 					self._ignore_obj[self._target] = true
@@ -1366,6 +1386,10 @@ draconis.wyvern_behavior = {
 			local stance = (self.owner and self.stance) or "aggressive"
 			if stance == "passive" then return 0 end
 			local target = self._target
+			if target and is_forbidden_target(self, target) then
+				self._target = nil
+				return 0
+			end
 			if not target then
 				target = find_target(self, draconis.wyvern_targets)
 				if not target or not target:get_pos() then return 0 end

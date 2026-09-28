@@ -1838,6 +1838,8 @@ minetest.register_on_mods_loaded(function()
 					return
 				end
 				local player_name = puncher:get_player_name()
+				-- Pets don't attack mobs owned by their owner, themselves included
+				if self.owner == player_name then return end
 				if draconis.bonded_dragons[player_name]
 				and #draconis.bonded_dragons[player_name] > 0 then
 					for i = 1, #draconis.bonded_dragons[player_name] do
@@ -1982,7 +1984,7 @@ function draconis.wyvern_activate(self)
 	self.owner = self:recall("owner") or false
 	self.stance = self:recall("stance") or "neutral"
 	self.order = self:recall("order") or "wander"
-	self.flight_allowed = self:recall("flight_allowed") or false
+	self.fly_allowed = self:recall("fly_allowed") or false
 	self.hunger = self:recall("hunger") or self.max_hunger
 	activate_nametag(self)
 	-- Movement Data

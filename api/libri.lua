@@ -36,7 +36,7 @@ local pages = {
 			font_size = 24,
 			offset = {x = 10.5, y = 1.5},
 			size = {x = 4, y = 1},
-			text = "btn_dragons;Chapter 1: Dragons"
+			text = "btn_dragons;" .. S("Chapter 1: Dragons")
 		},
 		{ -- Chapter 2
 			unlock_key = "wyverns",
@@ -44,7 +44,7 @@ local pages = {
 			font_size = 24,
 			offset = {x = 10.5, y = 3.5},
 			size = {x = 4, y = 1},
-			text = "btn_wyverns;Chapter 2: Wyverns"
+			text = "btn_wyverns;" .. S("Chapter 2: Wyverns")
 		},
 		{ -- Chapter 3
 			unlock_key = "draconic_steel",
@@ -52,7 +52,7 @@ local pages = {
 			font_size = 24,
 			offset = {x = 10.5, y = 5.5},
 			size = {x = 4, y = 1},
-			text = "btn_draconic_steel;Chapter 3: Draconic Steel"
+			text = "btn_draconic_steel;" .. S("Chapter 3: Draconic Steel")
 		}
 	},
 	-- Chapter 1
@@ -231,7 +231,7 @@ local pages = {
 			element_type = "label",
 			font_size = 24,
 			offset = {x = 2, y = 0.5},
-			text = "Constructing a Forge:"
+			text = S("Constructing a Forge:")
 		},
 		{ -- Page 2
 			element_type = "label",
@@ -269,7 +269,7 @@ local pages = {
 			element_type = "label",
 			font_size = 24,
 			offset = {x = 11.5, y = 5.5},
-			text = "Fire Forge:"
+			text = S("Fire Forge:")
 		},
 		{ -- Fire Forge Instructions
 			element_type = "image",
@@ -281,7 +281,7 @@ local pages = {
 			element_type = "label",
 			font_size = 24,
 			offset = {x = 11.5, y = 0.5},
-			text = "Ice Forge:"
+			text = S("Ice Forge:")
 		},
 		{ -- Ice Forge Instructions
 			element_type = "image",
@@ -337,6 +337,32 @@ function draconis.add_page(inv, chapter)
 	return true
 end
 
+local libri_path = minetest.get_modpath("draconis") .. "/libri/"
+local libri_texts = {}
+
+-- Pages are read from libri/<lang_code>/ when a translation exists, otherwise from libri/
+local function get_libri_text(file, playername)
+	local info = minetest.get_player_information(playername)
+	local lang_code = info and info.lang_code or ""
+	if not lang_code:match("^[%w_]+$") then
+		lang_code = ""
+	end
+	local key = lang_code .. "/" .. file
+	if libri_texts[key] == nil then
+		local f = (lang_code ~= "" and io.open(libri_path .. key)) or io.open(libri_path .. file)
+		libri_texts[key] = false
+		if f then
+			local lines = {}
+			for line in f:lines() do
+				lines[#lines + 1] = line
+			end
+			f:close()
+			libri_texts[key] = minetest.formspec_escape(table.concat(lines, "\n") .. "\n")
+		end
+	end
+	return libri_texts[key]
+end
+
 local function render_element(def, meta, playername)
 	local chapters = (meta and minetest.deserialize(meta:get_string("chapters"))) or {}
 	local offset_x = def.offset.x
@@ -347,18 +373,12 @@ local function render_element(def, meta, playername)
 		local font_size_x = (draconis.libri_font_size[playername] or 1)
 		local font_size = (def.font_size or 16) * font_size_x
 		if def.file then
-			local filename = minetest.get_modpath("draconis") .. "/libri/" .. def.file
-			local file = io.open(filename)
-			if file then
-				local full_text = ""
-				for line in file:lines() do
-					full_text = full_text .. line .. "\n"
-				end
+			local full_text = get_libri_text(def.file, playername)
+			if full_text then
 				local total_offset = (offset_x + (0.35 - 0.35 * font_size_x)) .. "," .. offset_y
 				form = form ..
 					"hypertext[" .. total_offset .. ";8,9;text;<global color=#000000 size="
 						.. font_size .. " halign=center>" .. full_text .. "]"
-				file:close()
 			end
 		else
 			form = form .. "style_type[label;font_size=" .. font_size .. "]"

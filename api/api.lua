@@ -1997,6 +1997,8 @@ end
 -- Dragon
 
 function draconis.dragon_step(self, dtime)
+	-- Removed earlier in this step, by a utility or another mod
+	if not self.object:get_pos() then return end
 	self:update_emission()
 	self:destroy_terrain()
 	-- Animation Tracking
@@ -2121,6 +2123,8 @@ end
 -- Wyvern
 
 function draconis.wyvern_step(self, dtime)
+	-- Removed earlier in this step, by a utility or another mod
+	if not self.object:get_pos() then return end
 	-- Animation Tracking
 	local current_anim = self._anim
 	local is_flying = current_anim and (current_anim == "fly" or current_anim == "dive")
